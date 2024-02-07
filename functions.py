@@ -1,8 +1,12 @@
+import os 
 import cv2
 import imutils
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from PIL import Image
+import code2flow
+import pytesseract
 
 
 def orient_vertical(img):
@@ -87,7 +91,7 @@ def view_gray_imgs(img1, img2, title1='', title2=''):
         ax[1].set_title(f"{title2}\n{img2.shape}")
     except:
         ax[1].set_title(f"{title2}\n{img2.size}")
-    # plt.show()
+    plt.show()
     plt.close()
 
 
@@ -108,3 +112,75 @@ def enhance_txt(img):
     thresh, binary = cv2.threshold(blurred, threshold, 255, cv2.THRESH_BINARY)
 
     return binary
+
+def find_images(folder):
+    for file in os.listdir(folder):
+        full_path = os.path.join(folder, file)
+        if os.path.isfile(full_path):
+            # yield gives only one value (path) each time the function find_images is called
+            yield full_path  
+
+def write_to_csv(text_elements, output_path):
+    """
+    Function to write text elements to a CSV file.
+    Args:
+        text_elements (dict): A dictionary containing the text elements.
+        csv_path (str): The path to the CSV file.
+    Returns:
+        None
+    """
+    # Create a DataFrame from the text elements
+    df = pd.DataFrame(text_elements)
+    # Join filename for csv
+    csv_path = output_path + 'output.csv'
+    # Write the DataFrame to a CSV file
+    df.to_csv(csv_path, index=False)
+
+
+def process_receipt(filename, lang, verbosity, output_path):
+    # Read raw image
+    raw_img = cv2.imread(filename)
+
+    # View raw image
+    raw_rgb = cv2.cvtColor(raw_img, cv2.COLOR_BGR2RGB)
+    if verbosity > 0:
+        plt.imshow(raw_rgb)
+        plt.show()
+
+    # Rotate
+    rotated = orient_vertical(raw_img)
+
+    # Detect edge
+    edged = sharpen_edge(rotated)
+    binary = binarize(edged, 100)
+    boxed, largest_cnt = find_receipt_bounding_box(binary, rotated)
+    boxed_rgb = cv2.cvtColor(boxed, cv2.COLOR_BGR2RGB)
+
+    # Adjust tilt
+    rect, angle = find_tilt_angle(largest_cnt)
+    tilted, delta = adjust_tilt(boxed, angle)
+    print(f"{round(delta,2)} degree adjusted towards right.")
+
+    # Crop
+    cropped = crop(tilted, largest_cnt)
+
+    # Enhance txt
+    enhanced = enhance_txt(cropped)
+    enhanced_rgb = cv2.cvtColor(enhanced, cv2.COLOR_BGR2RGB)
+    enhanced_path = 'preprocessed/enhanced.jpg'
+    plt.imsave(enhanced_path, enhanced_rgb)
+
+    # Run OCR
+    options_all = f"--psm 1 --oem 1"
+    txt = pytesseract.image_to_string(enhanced_path, lang=lang, config=options_all)
+
+    # Save output txt
+    write_to_csv(txt, output_path)
+    txt_path = 'output/enhanced.txt'
+    with open(txt_path, 'w') as f:
+        f.write(txt)
+        f.close()
+
+    # Generate and save flowchart
+    #code2flow.code2flow(['run.py', 'functions.py'], 'flowchart/out.png')
+        
