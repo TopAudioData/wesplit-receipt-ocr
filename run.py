@@ -1,54 +1,52 @@
+import os 
+import sys
+import argparse
 import cv2
 import imutils
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
-from functions import orient_vertical, sharpen_edge, binarize, find_receipt_bounding_box, find_tilt_angle, adjust_tilt, crop, enhance_txt
+from functions import orient_vertical, sharpen_edge, binarize, \
+      find_receipt_bounding_box, find_tilt_angle, adjust_tilt, crop, \
+          enhance_txt, find_images, process_receipt, write_to_csv
 import code2flow
 import pytesseract
 
-# Read raw image
-raw_path = 'raw/20240207_154100.jpg'
-raw_img = cv2.imread(raw_path)
+parser = argparse.ArgumentParser()
+parser.add_argument("input", help="file or directory from which images will be read")
+parser.add_argument("-lang", type=str,
+                    default="deu",
+                    help="language to use for OCR")
+parser.add_argument("-out", "--output", type=str,
+                    help="output directory for OCR recognized text (default is to 'output')")
+parser.add_argument("-v", "--verbosity", type=int, choices=[0, 1, 2],
+                    default=1,
+                    help="increase output verbosity")
+options = parser.parse_args()
 
-# View raw image
-raw_rgb = cv2.cvtColor(raw_img, cv2.COLOR_BGR2RGB)
-plt.imshow(raw_rgb)
-plt.show()
+# Make sure that the output dir exists.
+if options.output and not os.path.isdir(options.output):
+    parser.error("output dir not found or not a dir: "+options.output)
 
 
-# Rotate
-rotated = orient_vertical(raw_img)
+# Read the input file(s).
+if not os.path.exists(options.input):
+    filenames = 'raw'
+if os.path.isfile(options.input):
+    filenames = [options.input]
+elif os.path.isdir(options.input):
+    filenames = list(find_images(options.input))
+else:
+    parser.error("input file not found: "+options.input)
 
-# Detect edge
-edged = sharpen_edge(rotated)
-binary = binarize(edged, 100)
-boxed, largest_cnt = find_receipt_bounding_box(binary, rotated)
-boxed_rgb = cv2.cvtColor(boxed, cv2.COLOR_BGR2RGB)
+for filename in filenames:
+    try:
+        receipt = process_receipt(filename, options.lang, options.verbosity, options.output)
+    except RuntimeError as timeout_error:
+        sys.stderr.write('Skipping {}, as it took too long to process'.format(filename))
+        continue
 
-# Adjust tilt
-rect, angle = find_tilt_angle(largest_cnt)
-tilted, delta = adjust_tilt(boxed, angle)
-print(f"{round(delta,2)} degree adjusted towards right.")
 
-# Crop
-cropped = crop(tilted, largest_cnt)
+if options.verbosity > 0:
+    print("Processing {} receipts from {}".format(len(filenames), options.input))
 
-# Enhance txt
-enhanced = enhance_txt(cropped)
-enhanced_rgb = cv2.cvtColor(enhanced, cv2.COLOR_BGR2RGB)
-enhanced_path = 'preprocessed/enhanced.jpg'
-plt.imsave(enhanced_path, enhanced_rgb)
-
-# Run OCR
-options_all = f"--psm 1 --oem 1"
-txt = pytesseract.image_to_string(enhanced_path, config=options_all)
-
-# Save output txt
-txt_path = 'output/enhanced.txt'
-with open(txt_path, 'w') as f:
-    f.write(txt)
-    f.close()
-
-# Generate and save flowchart
-code2flow.code2flow(['run.py', 'functions.py'], 'flowchart/out.png')
