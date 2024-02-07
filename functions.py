@@ -9,7 +9,7 @@ def orient_vertical(img):
     width = img.shape[1]
     height = img.shape[0]
     if width > height:
-        rotated = imutils.rotate(img, angle=270)
+        rotated = imutils.rotate_bound(img, angle=270)
     else:
         rotated = img.copy()
 

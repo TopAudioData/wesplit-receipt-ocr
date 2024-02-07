@@ -8,13 +8,13 @@ import code2flow
 import pytesseract
 
 # Read raw image
-raw_path = 'raw/faded2.JPG'
+raw_path = 'raw/20240207_154100.jpg'
 raw_img = cv2.imread(raw_path)
 
 # View raw image
-# raw_rgb = cv2.cvtColor(raw_img, cv2.COLOR_BGR2RGB)
-# plt.imshow(raw_rgb)
-# plt.show()
+raw_rgb = cv2.cvtColor(raw_img, cv2.COLOR_BGR2RGB)
+plt.imshow(raw_rgb)
+plt.show()
 
 
 # Rotate
