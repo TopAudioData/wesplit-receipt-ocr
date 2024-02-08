@@ -12,9 +12,13 @@ from functions import orient_vertical, sharpen_edge, binarize, \
 import code2flow
 import pytesseract
 
+# Catch the arguments given with calling the python-script
 parser = argparse.ArgumentParser()
-parser.add_argument("input", help="file or directory from which images will be read")
-parser.add_argument("-lang", type=str,
+parser.add_argument("-i", "--input", 
+                    default="raw",
+                    help="file or directory from which images will be read")
+
+parser.add_argument("-l", "--lang", type=str,
                     default="deu",
                     help="language to use for OCR")
 parser.add_argument("-out", "--output", type=str,
@@ -24,6 +28,7 @@ parser.add_argument("-v", "--verbosity", type=int, choices=[0, 1, 2],
                     help="increase output verbosity")
 options = parser.parse_args()
 
+
 # Make sure that the output dir exists.
 if options.output and not os.path.isdir(options.output):
     parser.error("output dir not found or not a dir: "+options.output)
@@ -31,15 +36,17 @@ if options.output and not os.path.isdir(options.output):
 
 # Read the input file(s).
 if not os.path.exists(options.input):
-    filenames = 'raw'
+    filenames = 'raw'   # if input path is not available, use folder 'raw'
 if os.path.isfile(options.input):
-    filenames = [options.input]
-elif os.path.isdir(options.input):
-    filenames = list(find_images(options.input))
+    filenames = [options.input] # if input path is a single file, use it
+elif os.path.isdir(options.input): # if input is a folder,
+    filenames = list(find_images(options.input)) # cathc the filenames of the folder by this function
 else:
     parser.error("input file not found: "+options.input)
 
-for filename in filenames:
+for filename in filenames:  # make enhancement and ocr for each file
+    #print(verbosity)
+    if options.verbosity > 0: print(f"start to process: {filename}")
     try:
         receipt = process_receipt(filename, options.lang, options.verbosity, options.output)
     except RuntimeError as timeout_error:
@@ -47,6 +54,5 @@ for filename in filenames:
         continue
 
 
-if options.verbosity > 0:
-    print("Processing {} receipts from {}".format(len(filenames), options.input))
+if options.verbosity > 0: print("Processing {} receipts from {}".format(len(filenames), options.input))
 
