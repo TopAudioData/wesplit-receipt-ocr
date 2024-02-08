@@ -17,3 +17,5 @@ pip3 install pytesseract
 
 brew install graphviz
 pip3 install code2flow
+
+pip install pandas

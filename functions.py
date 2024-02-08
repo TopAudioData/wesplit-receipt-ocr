@@ -14,6 +14,8 @@ def orient_vertical(img):
     height = img.shape[0]
     if width > height:
         rotated = imutils.rotate_bound(img, angle=270)
+        if verbosity > 0:
+            print("image rotated")
     else:
         rotated = img.copy()
 
@@ -38,33 +40,54 @@ def binarize(img, threshold):
 
 
 def find_receipt_bounding_box(binary, img):
-    global rect
-
+    # Predefine rect to the edges of the image 
+    # (rect is a rotated rectangle, represented by center_x and center_y, width and height, angle)
+    height, width = img.shape[:2]
+    rect = ((width/2, height/2), (width, height), 0)
+    
+    # Predefine largest_cnt
+    largest_cnt = np.array([[[0, 0]], [[width, 0]], [[width, height]], [[0, height]]])
+    
+    # Find contours on the image
     contours, hierarchy = cv2.findContours(
         binary, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
-    largest_cnt = max(contours, key=cv2.contourArea)
-    rect = cv2.minAreaRect(largest_cnt)
-    box = np.intp(cv2.boxPoints(rect))
-    boxed = cv2.drawContours(img.copy(), [box], 0, (255, 255, 255), 20)
-    return boxed, largest_cnt
+    
+    if contours:
+        # If contours are found, find the largest one
+        largest_cnt = max(contours, key=cv2.contourArea)
+        
+        # Get the minimum area rectangle that encloses the largest contour
+        rect = cv2.minAreaRect(largest_cnt)
+        
+        # Get the corners of the minimum area rectangle
+        box = np.intp(cv2.boxPoints(rect))
+        
+        # Draw the minimum area rectangle on a copy of the original image
+        boxed = cv2.drawContours(img.copy(), [box], 0, (255, 255, 255), 20)
+        
+        return boxed, largest_cnt, rect
+    else:
+        # If no contours are found, return the original image
+        return img, largest_cnt, rect
 
 
-def find_tilt_angle(largest_contour):
+
+def find_tilt_angle(rect):
     angle = rect[2]  # Find the angle of vertical line
-    print("Angle_0 = ", round(angle, 1))
+    if verbosity > 1: print("Angle_0 = ", round(angle, 1))
     if angle < -45:
         angle += 90
-        print("Angle_1:", round(angle, 1))
+        if verbosity > 1: print("Angle_1:", round(angle, 1))
     else:
         uniform_angle = abs(angle)
-    print("Uniform angle = ", round(uniform_angle, 1))
+    if verbosity > 1: print("Uniform angle = ", round(uniform_angle, 1))
     return rect, uniform_angle
 
 
 def adjust_tilt(img, angle):
     if angle >= 5 and angle < 80:
         rotated_angle = 0
-    elif angle < 5:
+    elif angle < - 5 and angle < -80:
         rotated_angle = angle
     else:
         rotated_angle = 270+angle
@@ -137,13 +160,16 @@ def write_to_csv(text_elements, output_path):
     df.to_csv(csv_path, index=False)
 
 
-def process_receipt(filename, lang, verbosity, output_path):
+def process_receipt(filename, lang, verb, output_path):
+    # make verbosity a global variable for all funtions
+    global verbosity
+    verbosity = verb
     # Read raw image
     raw_img = cv2.imread(filename)
 
     # View raw image
     raw_rgb = cv2.cvtColor(raw_img, cv2.COLOR_BGR2RGB)
-    if verbosity > 0:
+    if verbosity > 1:
         plt.imshow(raw_rgb)
         plt.show()
 
@@ -153,13 +179,14 @@ def process_receipt(filename, lang, verbosity, output_path):
     # Detect edge
     edged = sharpen_edge(rotated)
     binary = binarize(edged, 100)
-    boxed, largest_cnt = find_receipt_bounding_box(binary, rotated)
+    boxed, largest_cnt, rect = find_receipt_bounding_box(binary, rotated)
     boxed_rgb = cv2.cvtColor(boxed, cv2.COLOR_BGR2RGB)
 
     # Adjust tilt
-    rect, angle = find_tilt_angle(largest_cnt)
+    rect, angle = find_tilt_angle(rect)
     tilted, delta = adjust_tilt(boxed, angle)
-    print(f"{round(delta,2)} degree adjusted towards right.")
+    if verbosity > 1:
+        print(f"{round(delta,2)} degree adjusted towards right.")
 
     # Crop
     cropped = crop(tilted, largest_cnt)
@@ -175,11 +202,14 @@ def process_receipt(filename, lang, verbosity, output_path):
     txt = pytesseract.image_to_string(enhanced_path, lang=lang, config=options_all)
 
     # Save output txt
-    write_to_csv(txt, output_path)
+    ##write_to_csv(txt, output_path)
     txt_path = 'output/enhanced.txt'
     with open(txt_path, 'w') as f:
         f.write(txt)
         f.close()
+
+    #print(verbosity)
+    if verbosity > 0: print(f"{filename} processed")
 
     # Generate and save flowchart
     #code2flow.code2flow(['run.py', 'functions.py'], 'flowchart/out.png')
