@@ -9,10 +9,8 @@ As part of KaggleX BIPOC Mentorship Program-Cohort2 (Dec 2022 - Mar 2023), I cre
 
 ## Installation
 1. Download this repository to your local machine
-2. Open the project directory
-('3. In Terminal, run automated script to install packages
-- chmod +x install_packages.sh
-- sh install_packages.sh')
+2. Open the project directory  
+(Old = *3. In Terminal, run automated script to install packages  - chmod +x install_packages.sh  - sh install_packages.sh*)
 3. Use the requirements file in this repo to create a new environment.
   ```BASH
   pyenv local 3.11.3
