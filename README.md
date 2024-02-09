@@ -28,7 +28,10 @@ As part of KaggleX BIPOC Mentorship Program-Cohort2 (Dec 2022 - Mar 2023), I cre
 - Add a scanned receipt (i.e. .JPG, .PNG) to `raw` folder
 
 ## Run
-- python3 run.py
+ `python receipt_ocr.py`
+or with options:
+`python receipt_ocr.py -i=inputfile_or_folder -out=outputfile_or_folder -v=0 , 1, 2, 3  -> verbosity_grade(how much information are displayed)
+
 
 ## Output
 - Enhanced receipt (`enhanced.jpg`) is saved in `preprocessed`folder
