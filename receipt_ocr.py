@@ -22,16 +22,14 @@ parser.add_argument("-l", "--lang", type=str,
                     default="deu",
                     help="language to use for OCR")
 parser.add_argument("-out", "--output", type=str,
-                    help="output directory for OCR recognized text (default is to 'output')")
-parser.add_argument("-v", "--verbosity", type=int, choices=[0, 1, 2],
+                    default="output",
+                    help="output path for OCR recognized text. \
+                         Could be a directory or a filename \
+                         default path is 'output' directory)")
+parser.add_argument("-v", "--verbosity", type=int, choices=[0, 1, 2, 3],
                     default=1,
                     help="increase output verbosity")
 options = parser.parse_args()
-
-
-# Make sure that the output dir exists.
-if options.output and not os.path.isdir(options.output):
-    parser.error("output dir not found or not a dir: "+options.output)
 
 
 # Read the input file(s).
@@ -40,9 +38,15 @@ if not os.path.exists(options.input):
 if os.path.isfile(options.input):
     filenames = [options.input] # if input path is a single file, use it
 elif os.path.isdir(options.input): # if input is a folder,
-    filenames = list(find_images(options.input)) # cathc the filenames of the folder by this function
+    filenames = list(find_images(options.input)) # catch the filenames of the folder by this function
 else:
     parser.error("input file not found: "+options.input)
+
+# If input is a directory, make sure that the output dir exists.
+# If input is a single file than use the output directory
+if len(filenames) > 1 and not os.path.isdir(options.output):
+    parser.error("input is a directory, but output directory not found or not a directory: "+options.output)
+
 
 for filename in filenames:  # make enhancement and ocr for each file
     #print(verbosity)
