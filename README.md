@@ -1,8 +1,10 @@
-## During Our Capstone Project of the Data Science Bootcamp I worked with this Receipt-OCR-Tool to catch the needed receipt-data for our project.  
+## During Our Capstone Project of the Data Science Bootcamp I worked with this Receipt-OCR-Tool by Jaelin Lee to catch the needed receipt-data for our project.  
 The OCR-functionality is still good but failed at to many of our receipts.  
 Though modifications in preprocessing of the pictures and moving the script to a notebook was it not possible in the given time frame to reach the needed precision.  
 I want to work on afterwards on it to optimze this nice OCR-Project.
-   
+Many thanks to Jaelin Lee for the article [Faded, Torn, Rotated Receipt OCR with Image Preprocessing](https://medium.com/@jaelin_75015/faded-torn-rotated-receipt-ocr-with-image-preprocessing-1fb03c036504) at medium.com and for this repository which was a really good template to me!    
+
+05-2024   
 Tobias Pötzl
    
 ### In the following is the original README-text by Jaelin Lee:
