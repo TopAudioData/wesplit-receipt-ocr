@@ -1,3 +1,12 @@
+## During Our Capstone Project of the Data Science Bootcamp I worked with this Receipt-OCR-Tool to catch the needed receipt-data for our project.  
+The OCR-functionality is still good but failed at to many of our receipts.  
+Though modifications in preprocessing of the pictures and moving the script to a notebook was it not possible in the given time frame to reach the needed precision.  
+I want to work on afterwards on it to optimze this nice OCR-Project.
+   
+Tobias Pötzl
+   
+### In the following is the original README-text by Jaelin Lee:
+
 ----
 ## Faded, Torn, Rotated Receipt OCR with Image Preprocessing
 As part of KaggleX BIPOC Mentorship Program-Cohort2 (Dec 2022 - Mar 2023), I created a Receipt OCR Web App called **WeSplit**. This app utilizes [Tesseract OCR engine](https://github.com/tesseract-ocr/tesseract), an open source library, and custom preprocessing steps that I designed to improve the quality of the input image. The subset of the code is shared here to demonstrate the preprocessing steps and its positive impact to the OCR output.

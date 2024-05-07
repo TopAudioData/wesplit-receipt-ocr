@@ -153,6 +153,8 @@ output/
 
 # Graphics takes up lots of space
 raw/
+preprocessed/
+output/
 *.JPG
 *.JPEG
 *.jpg 
@@ -164,5 +166,6 @@ private/
 key.json
 wandb_key.py
 firebaseConfig.py
+
 
 

@@ -205,7 +205,7 @@ def enhance_txt(img):
         #plt.show()
         plt.show(block=False)
 
-        plt.pause(3)
+        plt.pause(5)
         plt.close()
 
     return binary
